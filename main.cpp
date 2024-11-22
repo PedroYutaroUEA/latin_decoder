@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <cctype>
 
 #define HT_SIZE 26
 #define HT_BASE 11
@@ -85,9 +86,10 @@ vector<int> computeSkipVector(string &P)
     R[P[i]] = i;
   return R;
 }
-
-void boyerMoore(string &T, string &P)
+// problema aqui
+string boyerMoore(string &T, string &P)
 {
+  string segmentation;
   int N = T.size(), M = P.size(), skip = 0;
   for (int i = 0; i <= N - M; i += skip)
   {
@@ -103,13 +105,63 @@ void boyerMoore(string &T, string &P)
         break;
       }
     }
+    segmentation += to_string(skip);
+    segmentation.push_back(' ');
     if (skip == 0)
     {
-      cout << "Pattern found at index " << i << endl;
+      segmentation.push_back('(');
+      segmentation += to_string(i);
+      segmentation.push_back(')');
+      segmentation.push_back(' ');
       skip = 1;
-      break;
     }
   }
+  return segmentation;
+}
+
+string decoder(string &T, int k)
+{
+  string decoded_text;
+  for (char c : T)
+  {
+    if (c != ' ' && c != '.')
+      decoded_text += char((c - 'A' - k + 26) % 26 + 'A');
+    else
+      decoded_text += c;
+  }
+  return decoded_text;
+}
+
+list<string> cesarDecoder(string &T, list<string> &words)
+{
+  string decoded_text, segmentation;
+  list<string> decoded_words;
+  bool flag = false;
+  for (int i = 0; i < 26; ++i)
+  { 
+    decoded_text = decoder(T, i);
+    // problema aqui
+    for (string &P : words)
+    {
+      segmentation = boyerMoore(T, P);
+      decoded_words.push_back(segmentation);
+      for (auto w : segmentation)
+      {
+        if (w == '(')
+        {
+          cout << w << " ";
+          flag = true;
+          break;
+        }
+      }
+    }
+    if (flag)
+        return decoded_words;
+    else
+        decoded_words.clear();
+  }
+  decoded_words.push_back("-1");
+  return decoded_words;
 }
 
 int main() {
@@ -127,23 +179,37 @@ int main() {
   for (auto &pair : dict)
     ht.insert(pair.first, pair.second);
   // store decoded text
-  string symbols_text, encoded_text;
+  string symbols_text, translated_text;
   while (getline(cin, symbols_text))
   {
     for (int i = 0; i < symbols_text.size(); i += 3) {
       string symbol = symbols_text.substr(i, 3);
-      encoded_text += ht.getLetterBySymbol(symbol);
+      translated_text += ht.getLetterBySymbol(symbol);
     }
-    if (encoded_text.substr(encoded_text.size() - 1) == ".")
+    if (translated_text.substr(translated_text.size() - 1) == ".")
       break;
   }
   // store target words
-  vector<string> target_words;
+  list<string> target_words;
   string word;
   while (getline(cin, word) && word != "fim")
-    target_words.push_back(word);
+  {
+    string uppercase_word;
+    for (auto c : word)
+      uppercase_word += toupper(c);
+    target_words.push_back(uppercase_word);
+  }
 
-  cout << encoded_text << endl;
-  for (auto &word : target_words)
-    cout << word << endl;
+  list<string> decoded_text = cesarDecoder(translated_text, target_words);
+  auto i = target_words.begin();
+  auto j = decoded_text.begin();
+
+  while (i != target_words.end() && j != decoded_text.end())
+  {
+    cout << *i << ": ";
+    cout << *j << endl;
+    i++;
+    j++;
+  }
+  return 0;
 }
