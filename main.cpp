@@ -76,6 +76,42 @@ public:
     }
 };
 
+vector<int> computeSkipVector(string &P)
+{
+  int M = P.size();
+  vector<int> R;
+  R.resize(256, -1);
+  for (int i = 0; i < M; i++)
+    R[P[i]] = i;
+  return R;
+}
+
+void boyerMoore(string &T, string &P)
+{
+  int N = T.size(), M = P.size(), skip = 0;
+  for (int i = 0; i <= N - M; i += skip)
+  {
+    skip = 0;
+    for (int j = M - 1; j >= 0; j--)
+    {
+      if (P[j] != T[i + j])
+      {
+        vector<int> R = computeSkipVector(P);
+        skip = j - R[T[i + j]];
+        if (skip < 1)
+          skip = 1;
+        break;
+      }
+    }
+    if (skip == 0)
+    {
+      cout << "Pattern found at index " << i << endl;
+      skip = 1;
+      break;
+    }
+  }
+}
+
 int main() {
   // create dict
   HashTable ht;
