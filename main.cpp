@@ -77,47 +77,52 @@ public:
     }
 };
 
-vector<int> computeSkipVector(string &P)
+class BoyerMoore
 {
-  int M = P.size();
+private:
   vector<int> R;
-  R.resize(256, -1);
-  for (int i = 0; i < M; i++)
-    R[P[i]] = i;
-  return R;
-}
-// problema aqui
-string boyerMoore(string &T, string &P)
-{
-  string segmentation;
-  int N = T.size(), M = P.size(), skip = 0;
-  for (int i = 0; i <= N - M; i += skip)
+  string P;
+public:
+  BoyerMoore(string p) : R(256), P(p)
   {
-    skip = 0;
-    for (int j = M - 1; j >= 0; j--)
+    int M = P.length();
+    for (int i = 0; i < 256; i++)
+      R[i] = -1;
+    for (int j = 0; j < M; j++)
+      R[P[j]] = j;
+  }
+
+  string search(string &T)
+  {
+    string segmentation;
+    int N = T.size(), M = P.size(), skip = 0;
+    for (int i = 0; i <= N - M; i += skip)
     {
-      if (P[j] != T[i + j])
+      skip = 0;
+      for (int j = M - 1; j >= 0; j--)
       {
-        vector<int> R = computeSkipVector(P);
-        skip = j - R[T[i + j]];
-        if (skip < 1)
-          skip = 1;
-        break;
+        if (P[j]!= T[i + j])
+        {
+          skip = j - R[T[i + j]];
+          if (skip < 1)
+            skip = 1;
+          break;
+        }
+      }
+      segmentation += to_string(skip);
+      segmentation.push_back(' ');
+      if (skip == 0)
+      {
+        segmentation.push_back('(');
+        segmentation += to_string(i);
+        segmentation.push_back(')');
+        segmentation.push_back(' ');
+        skip = 1;
       }
     }
-    segmentation += to_string(skip);
-    segmentation.push_back(' ');
-    if (skip == 0)
-    {
-      segmentation.push_back('(');
-      segmentation += to_string(i);
-      segmentation.push_back(')');
-      segmentation.push_back(' ');
-      skip = 1;
-    }
+    return segmentation;
   }
-  return segmentation;
-}
+};
 
 string decoder(string &T, int k)
 {
@@ -143,13 +148,13 @@ list<string> cesarDecoder(string &T, list<string> &words)
     // problema aqui
     for (string &P : words)
     {
-      segmentation = boyerMoore(T, P);
+      BoyerMoore bm(P);
+      segmentation = bm.search(decoded_text);
       decoded_words.push_back(segmentation);
       for (auto w : segmentation)
       {
         if (w == '(')
         {
-          cout << w << " ";
           flag = true;
           break;
         }
@@ -192,12 +197,28 @@ int main() {
   // store target words
   list<string> target_words;
   string word;
-  while (getline(cin, word) && word != "fim")
+  while (getline(cin, word))
   {
-    string uppercase_word;
-    for (auto c : word)
-      uppercase_word += toupper(c);
-    target_words.push_back(uppercase_word);
+    string upper;
+    if (word[0] >= 'A' && word[0] <= 'Z')
+    {
+      for (char p : word)
+      {
+          upper.push_back(p);
+      }
+    }
+    else
+    {
+      for (char p : word)
+      {
+          upper.push_back(p - ('a' - 'A'));
+      }
+    }
+    if (upper == "FIM" || word == "FIM")
+    {
+      break;
+    }
+    target_words.push_back(upper);
   }
 
   list<string> decoded_text = cesarDecoder(translated_text, target_words);
